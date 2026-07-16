@@ -1,0 +1,15 @@
+node_modules/
+.pnpm-store/
+.next/
+.vercel/
+coverage/
+dist/
+build/
+cache/
+out/
+.tmp/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+recovery_file_*.dat

@@ -1,0 +1,36 @@
+{
+  "name": "@coffer/arc",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "circle:bootstrap-wallet": "node scripts/bootstrap-circle-wallet.mjs",
+    "contract:compile": "node scripts/compile-contract.mjs",
+    "contract:deploy": "node scripts/deploy-registry.mjs",
+    "evidence:self-test": "tsx scripts/live-evidence.ts --self-test && node scripts/verify-live-evidence.mjs --self-test",
+    "evidence:verify": "node scripts/verify-live-evidence.mjs",
+    "live:evidence": "tsx scripts/live-evidence.ts",
+    "live:preflight": "node scripts/preflight-live.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run && node scripts/compile-contract.mjs && pnpm circle:bootstrap-wallet -- --self-test && pnpm evidence:self-test"
+  },
+  "dependencies": {
+    "@circle-fin/developer-controlled-wallets": "10.8.0",
+    "@circle-fin/smart-contract-platform": "10.8.0",
+    "viem": "2.55.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "solc": "0.8.28",
+    "tsx": "4.22.4",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

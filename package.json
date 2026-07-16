@@ -1,0 +1,32 @@
+{
+  "name": "coffer-arc-hackathon",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.33.4",
+  "dependencies": {
+    "next": "15.5.20"
+  },
+  "scripts": {
+    "demo": "pnpm --filter @coffer/arc-demo-web dev",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "build": "pnpm --filter @coffer/arc-demo-web build",
+    "contract:compile": "pnpm --filter @coffer/arc contract:compile",
+    "contract:test": "docker run --rm -v \"$PWD/packages/coffer-arc/contracts:/work\" -w /work ghcr.io/foundry-rs/foundry@sha256:8347b728d5d393dac1c018691b36f506d23b9dcd78341d40ea0fcb11c3a19cdd \"forge test -vvv\"",
+    "circle:bootstrap-wallet": "pnpm --filter @coffer/arc circle:bootstrap-wallet",
+    "contract:deploy": "pnpm --filter @coffer/arc contract:deploy",
+    "evidence:verify": "pnpm --filter @coffer/arc evidence:verify",
+    "live:evidence": "pnpm --filter @coffer/arc live:evidence",
+    "live:preflight": "pnpm --filter @coffer/arc live:preflight"
+  },
+  "pnpm": {
+    "overrides": {
+      "esbuild": "0.28.1",
+      "postcss": "8.5.15"
+    }
+  }
+}

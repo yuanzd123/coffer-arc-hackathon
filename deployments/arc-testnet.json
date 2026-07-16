@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "network": "ARC-TESTNET",
+  "chainId": 5042002,
+  "registryAddress": "0x3d1787f00516ed4a30363b3fB3805bC78CC28F9D",
+  "operator": "0x79313e5EBcD4562c19301Fd41d43f7239606c9f4",
+  "deploymentTransactionHash": "0xb566327ea6c5685a43acdab6c1e765110352a8dabb0649f21fc9012e7cf6b33d",
+  "deploymentBlockNumber": "52052011",
+  "compilerVersion": "0.8.28+commit.7893614a.Emscripten.clang",
+  "optimizer": {
+    "enabled": true,
+    "runs": 200
+  },
+  "sourceHash": "0xa422799ed3d5c6d997730c358308eac95fa2135f22bb1a781f583dc793bbcb8b",
+  "creationBytecodeHash": "0x0909106a23c8b08d33df151ee2a2f6f6d52926968588348aa8e49ee142ecae98",
+  "runtimeBytecodeHash": "0x4e91b8e67ab7f4a43f03fec8ee35c1586a383c8f302abc742fcf9942009e68a7",
+  "deployedAt": "2026-07-16T05:11:13.766Z"
+}

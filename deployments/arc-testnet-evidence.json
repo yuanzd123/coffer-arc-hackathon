@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 2,
+  "artifact": "coffer-arc-live-evidence",
+  "network": "ARC-TESTNET",
+  "chainId": 5042002,
+  "generationMode": "fresh",
+  "generatedAt": "2026-07-16T05:19:48.444Z",
+  "deploymentManifestSha256": "sha256:d2a1cf0994cec2ced624d52f1b0a04a24193027bc14231ef0d8809a1c488c934",
+  "verificationScope": {
+    "hostedAndWriterObservations": "attested_by_secret_backed_runner",
+    "onchainEvidence": "independently_verified_from_public_source_manifest_and_arc_rpc"
+  },
+  "contracts": {
+    "registryAddress": "0x3d1787f00516ed4a30363b3fB3805bC78CC28F9D",
+    "registryOperator": "0x79313e5EBcD4562c19301Fd41d43f7239606c9f4",
+    "registryDeploymentBlock": "52052011",
+    "registryRuntimeBytecodeHash": "0x4e91b8e67ab7f4a43f03fec8ee35c1586a383c8f302abc742fcf9942009e68a7",
+    "registryTransactionHash": "0xb566327ea6c5685a43acdab6c1e765110352a8dabb0649f21fc9012e7cf6b33d",
+    "registryArcScanUrl": "https://testnet.arcscan.app/address/0x3d1787f00516ed4a30363b3fB3805bC78CC28F9D",
+    "registryTransactionArcScanUrl": "https://testnet.arcscan.app/tx/0xb566327ea6c5685a43acdab6c1e765110352a8dabb0649f21fc9012e7cf6b33d",
+    "memoAddress": "0x5294E9927c3306DcBaDb03fe70b92e01cCede505",
+    "usdcAddress": "0x3600000000000000000000000000000000000000",
+    "fixedRecipient": "0xf8437D8DA06a45f2EFa5777569B27Fe5cA0BcDF8",
+    "fixedRecipientArcScanUrl": "https://testnet.arcscan.app/address/0xf8437D8DA06a45f2EFa5777569B27Fe5cA0BcDF8"
+  },
+  "scenarioOrder": [
+    "block",
+    "approval",
+    "allow",
+    "allow_replay"
+  ],
+  "scenarios": {
+    "block": {
+      "expectedOutcome": "block",
+      "observedOutcome": "block",
+      "executionState": "not_executed",
+      "writerCalls": {
+        "anchor": 0,
+        "settlement": 0
+      },
+      "currentOperatorNonceWindow": {
+        "before": {
+          "blockNumber": "52052987",
+          "transactionCount": "1"
+        },
+        "after": {
+          "blockNumber": "52052987",
+          "transactionCount": "1"
+        }
+      },
+      "arcTransactions": []
+    },
+    "approval": {
+      "expectedOutcome": "requires_approval",
+      "observedOutcome": "requires_approval",
+      "executionState": "not_executed",
+      "writerCalls": {
+        "anchor": 0,
+        "settlement": 0
+      },
+      "currentOperatorNonceWindow": {
+        "before": {
+          "blockNumber": "52052987",
+          "transactionCount": "1"
+        },
+        "after": {
+          "blockNumber": "52052987",
+          "transactionCount": "1"
+        }
+      },
+      "arcTransactions": []
+    },
+    "allow": {
+      "expectedOutcome": "allow",
+      "observedOutcome": "allow",
+      "executionState": "settled",
+      "replayed": false,
+      "executionObservation": "fresh_current_execution",
+      "hostedSettlementObservation": "reported_by_current_execution",
+      "recordHash": "0xb6291cf8f771b4eda7af85175e8e301e9d25a6505434adaa55909199cb7f319b",
+      "decisionCommitment": "0xdcde896d93c148c4694b58a82bc273df3ee6a2610a7c8477d2ceb6ec7de4d472",
+      "writerCalls": {
+        "anchor": 1,
+        "settlement": 1
+      },
+      "currentOperatorNonceWindow": {
+        "before": {
+          "blockNumber": "52052987",
+          "transactionCount": "1"
+        },
+        "after": {
+          "blockNumber": "52053020",
+          "transactionCount": "3"
+        }
+      },
+      "historicalOperatorNonceWindow": {
+        "beforeTransactionCount": "1",
+        "afterTransactionCount": "3",
+        "anchorNonce": "1",
+        "settlementNonce": "2",
+        "anchorTransactionIndex": "0",
+        "settlementTransactionIndex": "0"
+      },
+      "anchor": {
+        "transactionHash": "0x1425d5a89cbf89e0dd03247f49e188fc62ea1a385db6b6fa409170fa6f2e7d29",
+        "blockNumber": "52053007",
+        "arcScanUrl": "https://testnet.arcscan.app/tx/0x1425d5a89cbf89e0dd03247f49e188fc62ea1a385db6b6fa409170fa6f2e7d29"
+      },
+      "settlement": {
+        "transactionHash": "0x50d8df5b32b339172b976ceffb43a772a695fa47f7c6cfe24260719a6a1a5abb",
+        "blockNumber": "52053015",
+        "sender": "0x79313e5EBcD4562c19301Fd41d43f7239606c9f4",
+        "recipient": "0xf8437D8DA06a45f2EFa5777569B27Fe5cA0BcDF8",
+        "amountMinor": "10000",
+        "memoId": "0xdcde896d93c148c4694b58a82bc273df3ee6a2610a7c8477d2ceb6ec7de4d472",
+        "memoData": "0xb6291cf8f771b4eda7af85175e8e301e9d25a6505434adaa55909199cb7f319b",
+        "callDataHash": "0x45925f7600b5bfabac9fddf0ad15396c3418443a45103de0076463d7185b663d",
+        "arcScanUrl": "https://testnet.arcscan.app/tx/0x50d8df5b32b339172b976ceffb43a772a695fa47f7c6cfe24260719a6a1a5abb"
+      }
+    },
+    "allowReplay": {
+      "expectedOutcome": "allow",
+      "observedOutcome": "allow",
+      "executionState": "settled",
+      "replayed": true,
+      "executionObservation": "replay_confirmation",
+      "hostedSettlementObservation": "preexisting_reference",
+      "recordHash": "0xb6291cf8f771b4eda7af85175e8e301e9d25a6505434adaa55909199cb7f319b",
+      "decisionCommitment": "0xdcde896d93c148c4694b58a82bc273df3ee6a2610a7c8477d2ceb6ec7de4d472",
+      "writerCalls": {
+        "anchor": 0,
+        "settlement": 0
+      },
+      "currentOperatorNonceWindow": {
+        "before": {
+          "blockNumber": "52053020",
+          "transactionCount": "3"
+        },
+        "after": {
+          "blockNumber": "52053020",
+          "transactionCount": "3"
+        }
+      },
+      "historicalOperatorNonceWindow": {
+        "beforeTransactionCount": "1",
+        "afterTransactionCount": "3",
+        "anchorNonce": "1",
+        "settlementNonce": "2",
+        "anchorTransactionIndex": "0",
+        "settlementTransactionIndex": "0"
+      },
+      "anchor": {
+        "transactionHash": "0x1425d5a89cbf89e0dd03247f49e188fc62ea1a385db6b6fa409170fa6f2e7d29",
+        "blockNumber": "52053007",
+        "arcScanUrl": "https://testnet.arcscan.app/tx/0x1425d5a89cbf89e0dd03247f49e188fc62ea1a385db6b6fa409170fa6f2e7d29"
+      },
+      "settlement": {
+        "transactionHash": "0x50d8df5b32b339172b976ceffb43a772a695fa47f7c6cfe24260719a6a1a5abb",
+        "blockNumber": "52053015",
+        "sender": "0x79313e5EBcD4562c19301Fd41d43f7239606c9f4",
+        "recipient": "0xf8437D8DA06a45f2EFa5777569B27Fe5cA0BcDF8",
+        "amountMinor": "10000",
+        "memoId": "0xdcde896d93c148c4694b58a82bc273df3ee6a2610a7c8477d2ceb6ec7de4d472",
+        "memoData": "0xb6291cf8f771b4eda7af85175e8e301e9d25a6505434adaa55909199cb7f319b",
+        "callDataHash": "0x45925f7600b5bfabac9fddf0ad15396c3418443a45103de0076463d7185b663d",
+        "arcScanUrl": "https://testnet.arcscan.app/tx/0x50d8df5b32b339172b976ceffb43a772a695fa47f7c6cfe24260719a6a1a5abb"
+      }
+    }
+  },
+  "invariants": {
+    "blockedBeforeWallet": true,
+    "approvalPausedBeforeWallet": true,
+    "allowAnchoredThenSettled": true,
+    "replayUsedOriginalEvidence": true,
+    "independentVerificationCommand": "pnpm --filter @coffer/arc evidence:verify"
+  }
+}
