@@ -38,7 +38,6 @@ jobs:
       - name: Forge tests in pinned container
         run: >-
           docker run --rm
-          -v "$PWD/packages/coffer-arc/contracts:/work"
-          -w /work
+          -v "$PWD/packages/coffer-arc/contracts:/source:ro"
           ghcr.io/foundry-rs/foundry@sha256:8347b728d5d393dac1c018691b36f506d23b9dcd78341d40ea0fcb11c3a19cdd
-          "forge test -vvv"
+          "mkdir -p /tmp/contracts && cp -a /source/. /tmp/contracts/ && cd /tmp/contracts && forge test -vvv"
