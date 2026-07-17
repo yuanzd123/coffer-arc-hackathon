@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import assert from "node:assert/strict";
 import {
   createPublicClient,
   decodeEventLog,
@@ -14,7 +15,10 @@ import { arcTestnet } from "viem/chains";
 import { compileDecisionRegistry, materializeRegistryRuntimeBytecode } from "./contract-artifact.mjs";
 
 const ARC_CHAIN_ID = 5_042_002;
-const ARC_RPC_URL = process.env.ARC_RPC_URL?.trim() || "https://rpc.blockdaemon.testnet.arc.io";
+const DEFAULT_ARC_RPC_URLS = Object.freeze([
+  "https://rpc.blockdaemon.testnet.arc.io",
+  "https://rpc.drpc.testnet.arc.io"
+]);
 const ARC_EXPLORER_URL = "https://testnet.arcscan.app";
 const ARC_USDC = getAddress("0x3600000000000000000000000000000000000000");
 const ARC_MEMO = getAddress("0x5294E9927c3306DcBaDb03fe70b92e01cCede505");
@@ -110,15 +114,11 @@ async function main() {
     repositoryRoot,
     options.evidence ?? process.env.COFFER_ARC_EVIDENCE_OUTPUT?.trim() ?? "deployments/arc-testnet-evidence.json"
   );
-  const rpcUrl = verifiedRpcUrl(options.rpcUrl ?? process.env.ARC_RPC_URL?.trim() ?? ARC_RPC_URL);
+  const rpcUrls = selectRpcUrls(options.rpcUrl, process.env.ARC_RPC_URL);
   const [manifestBytes, evidenceBytes] = await Promise.all([fs.readFile(manifestPath), fs.readFile(evidencePath)]);
   const manifest = validateDeploymentManifest(JSON.parse(manifestBytes.toString("utf8")));
   const evidence = validateEvidenceDocument(JSON.parse(evidenceBytes.toString("utf8")), manifest, manifestBytes);
-  const client = createPublicClient({
-    chain: arcTestnet,
-    transport: http(rpcUrl, { retryCount: 4, retryDelay: 500 })
-  });
-  await verifyOnchainEvidence(client, manifest, evidence);
+  const rpcVerification = await verifyWithRpcFallback(rpcUrls, manifest, evidence);
   process.stdout.write(`${JSON.stringify({
     ok: true,
     generationMode: evidence.generationMode,
@@ -135,10 +135,35 @@ async function main() {
       publicSoliditySource: true,
       deploymentManifest: true,
       arcRpc: true,
+      fixedRpcFallbackUsed: rpcVerification.fallbackUsed,
       hostedAndWriterObservationsAreRunnerAttested: true,
       secretsRequired: false
     }
   }, null, 2)}\n`);
+}
+
+async function verifyWithRpcFallback(rpcUrls, manifest, evidence) {
+  const failures = [];
+  for (let index = 0; index < rpcUrls.length; index += 1) {
+    const client = createPublicClient({
+      chain: arcTestnet,
+      transport: http(rpcUrls[index], { retryCount: 4, retryDelay: 500 })
+    });
+    try {
+      await verifyOnchainEvidence(client, manifest, evidence);
+      return { fallbackUsed: index > 0 };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown RPC verification failure";
+      failures.push(`provider ${index + 1}: ${message.slice(0, 300).replace(/[\u0000-\u001f\u007f]/g, " ")}`);
+    }
+  }
+  fail(`all fixed Arc RPC verification paths failed (${failures.join("; ")})`);
+}
+
+function selectRpcUrls(optionValue, environmentValue) {
+  const explicit = optionValue ?? environmentValue?.trim();
+  if (explicit) return [verifiedRpcUrl(explicit)];
+  return DEFAULT_ARC_RPC_URLS.map(verifiedRpcUrl);
 }
 
 export function validateDeploymentManifest(value) {
@@ -648,6 +673,12 @@ function addressUrl(address) { return `${ARC_EXPLORER_URL}/address/${getAddress(
 function fail(message) { throw new Error(message); }
 
 function runSelfTest() {
+  assert.deepEqual(
+    selectRpcUrls(undefined, undefined),
+    DEFAULT_ARC_RPC_URLS.map((value) => new URL(value).toString())
+  );
+  assert.deepEqual(selectRpcUrls("https://example.com/rpc", undefined), ["https://example.com/rpc"]);
+  assert.deepEqual(selectRpcUrls(undefined, "https://localhost.example/rpc"), ["https://localhost.example/rpc"]);
   const { manifest, manifestBytes, evidence: fresh } = sampleDocuments("fresh");
   validateDeploymentManifest(manifest);
   validateEvidenceDocument(fresh, manifest, manifestBytes);

@@ -2,9 +2,9 @@ import type { Address, Hex } from "viem";
 import type {
   ArcDecisionWriter,
   ArcEvidenceVerifier,
-  CofferArcControlClient,
-  CofferArcDecision
+  CofferArcControlClient
 } from "@coffer/arc";
+import { evaluateReferenceSpend } from "./reference-policy";
 
 export function mockArcDependencies(sender: Address): {
   controlClient: CofferArcControlClient;
@@ -13,20 +13,7 @@ export function mockArcDependencies(sender: Address): {
 } {
   const controlClient: CofferArcControlClient = {
     async requestDecision(intent) {
-      const scenario = String(intent.metadata?.demoScenario ?? "allow");
-      const outcome: CofferArcDecision["outcome"] = scenario === "block"
-        ? "block"
-        : scenario === "approval"
-          ? "requires_approval"
-          : "allow";
-      return {
-        outcome,
-        spendRequestId: `si_mock_${scenario}`,
-        decisionId: `pd_mock_${scenario}`,
-        spendDecisionRecordId: `sdr_mock_${scenario}`,
-        reasonCode: outcome === "allow" ? "within_budget" : outcome === "block" ? "blocked_unknown_vendor" : "requires_approval_amount_threshold",
-        reason: "SIMULATED decision for local evaluation; no hosted or onchain write occurred."
-      };
+      return evaluateReferenceSpend(intent);
     },
     async reportSettlement() {}
   };

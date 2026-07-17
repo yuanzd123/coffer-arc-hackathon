@@ -12,6 +12,10 @@ describe("public demo response", () => {
     expect(serialized).not.toContain("si_mock_");
     expect(serialized).not.toContain("pd_mock_");
     expect(serialized).not.toContain("sdr_mock_");
+    expect(serialized).not.toContain("si_reference_");
+    expect(serialized).not.toContain("pd_reference_");
+    expect(serialized).not.toContain("sdr_reference_");
+    expect(serialized).not.toContain("PUBLIC REFERENCE decision");
     expect(serialized).not.toContain("SIMULATED decision");
     expect(serialized).not.toContain("within_budget");
     expect(serialized).not.toContain("reasonCode");
