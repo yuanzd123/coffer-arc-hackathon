@@ -1,15 +1,17 @@
 # Coffer for Arc
 
-This package is the narrow, public-extractable Arc integration for Coffer. It asks the hosted Coffer control plane for a spend decision **before** any wallet operation, anchors an opaque decision commitment, executes an approved USDC transfer through Arc's predeployed Memo contract, verifies the onchain evidence, and then reports the transaction hash to Coffer.
+This package is the public, judge-evaluable Arc integration for Coffer. It accepts a bounded spend decision before any wallet operation, anchors an opaque decision commitment, executes an approved USDC transfer through Arc's predeployed Memo contract, verifies the onchain evidence, and reports the verified transaction reference through the public adapter contract.
+
+The production Coffer policy engine is not included and is not requested for judging credit. The submitted repository lets judges inspect and run the separate hackathon reference policy, Arc adapter, fixed synthetic decision boundary, contract, verifier, tests, deployment tooling, and historical public evidence without using the private policy service.
 
 ## Safety boundary
 
 - `block` and `requires_approval` never call the Arc writer.
-- Live writes require a dedicated Circle Developer-Controlled payer **EOA** and a separate receive-only vendor recipient EOA. Arc Memo does not support a smart contract wallet as the direct caller.
+- Live Memo writes require a dedicated Circle Developer-Controlled payer **EOA** and a separate receive-only vendor recipient EOA. Arc supports account abstraction generally, but its Memo contract requires an EOA as the direct caller and explicitly excludes smart contract wallets in that role.
 - Circle anchor and settlement operations use separate, deterministic UUIDv4 idempotency keys so process retries do not create a second payment.
 - The verifier checks the Arc chain, registry event, Memo event, USDC Transfer event, sender, recipient, amount, commitment, and record hash before settlement is reported.
 - The registry is immutable, non-upgradeable, operator-only, and non-custodial.
-- Coffer's production policy engine, approval workflow, budget concurrency, ledger, evidence retention, RBAC, and data model are not part of this package.
+- Coffer's production policy engine, approval workflow, budget concurrency, ledger, evidence retention, RBAC, and data model are private product context and are not part of the judged implementation.
 
 Arc Testnet USDC has no real-world value. Never use a production wallet, production credentials, or customer data with this demo.
 
@@ -23,12 +25,11 @@ pnpm --filter @coffer/arc typecheck
 pnpm --filter @coffer/arc test
 ```
 
-The test suite validates the pre-payment gate, strict operation order, replay behavior, commitment construction, Circle idempotency keys, public hosted contract mapping, and Solidity compilation.
-The optional `pnpm contract:test` command runs the pinned Foundry image and requires Docker.
+The test suite validates the pre-payment gate, strict operation order, replay behavior, commitment construction, Circle idempotency keys, public hosted contract mapping, and Solidity compilation. The optional `pnpm contract:test` command runs the pinned Foundry image and requires Docker.
 
 ## Live environment
 
-The adapter expects server-side values for the hosted Coffer API, the dedicated Circle sandbox project, its payer/operator EOA, the separate fixed vendor recipient EOA, the deployed decision registry, and Arc RPC. Create the two Arc Testnet EOAs as one idempotent, role-labelled pair and validate the bootstrap offline. Always write the Circle response to a private, ignored file so wallet IDs are not printed to the terminal:
+The adapter expects server-side values for the hosted Coffer API, the dedicated Circle sandbox project, its payer/operator EOA, the separate fixed vendor recipient EOA, the deployed decision registry, and Arc RPC. Live deployment is not required for local mock/test/verifier review. If reproducing a new live run, create the two Arc Testnet EOAs as one idempotent, role-labelled pair and validate the bootstrap offline. Always write the Circle response to a private, ignored file so wallet IDs are not printed to the terminal:
 
 ```bash
 pnpm circle:bootstrap-wallet -- --self-test
@@ -58,6 +59,6 @@ Recovery mode first proves the existing Registry commitment and unique Memo sett
 
 `live:evidence` writes `deployments/arc-testnet-evidence.json` once. The schema distinguishes a fresh current execution from a recovered historical execution and stores only public Arc state, hashed allow-record evidence, nonce windows, and ArcScan links; block and approval outcomes do not retain record fingerprints. The deployment manifest contains no Circle-internal IDs.
 
-Hosted outcomes, writer-call counts, settlement-reference repair, and replay observations are runner-attested. `evidence:verify` independently verifies deployment and onchain claims using the public Solidity source, pinned `solc`, deployment manifest, evidence file, and Arc RPC; it never needs Circle or Coffer credentials. Use `COFFER_ARC_DEPLOYMENT_MANIFEST` and `COFFER_ARC_EVIDENCE_OUTPUT` to select alternate files.
+Hosted outcomes, writer-call counts, settlement-reference repair, and replay observations are runner-attested. `evidence:verify` independently verifies deployment and onchain claims using the public Solidity source, pinned `solc`, deployment manifest, evidence file, and two fixed public Arc RPCs; it never needs Circle or Coffer credentials. An explicit `ARC_RPC_URL` or `--rpc-url` selects one operator-provided endpoint. Use `COFFER_ARC_DEPLOYMENT_MANIFEST` and `COFFER_ARC_EVIDENCE_OUTPUT` to select alternate files.
 
-This package remains `private: true` to prevent accidental npm publication. Repository creation, deployment, and any package publication are separate, audited steps.
+This package remains `private: true` to prevent accidental npm publication. Public repository visibility is for hackathon review and does not grant an open-source license; see the repository `NOTICE.md`.

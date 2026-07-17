@@ -27,6 +27,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm contract:compile
+      - run: pnpm evidence:verify
 
   solidity:
     runs-on: ubuntu-24.04

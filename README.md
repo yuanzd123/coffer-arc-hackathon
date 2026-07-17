@@ -2,7 +2,7 @@
 
 **Transaction control for AI-agent money.** Coffer decides whether an agent may spend before Circle signs anything, then binds the approved decision to a USDC settlement on Arc.
 
-This repository is the narrow, reproducible Arc integration submitted to the Arc Programmable Money Hackathon’s **Agentic Economy** track. It contains the onchain commitment registry, Circle Developer-Controlled EOA adapter, Memo-bound USDC settlement, independent receipt verification, fixed-scenario demo, tests, and deployment tooling. Coffer’s policy intelligence and production control plane remain private and are consumed through a minimal hosted API contract.
+This repository is the narrow, reproducible Arc integration submitted to the Arc Programmable Money Hackathon’s **Agentic Economy** track. It contains a transparent hackathon reference policy, the onchain commitment registry, Circle Developer-Controlled EOA adapter, Memo-bound USDC settlement, independent receipt verification, fixed-scenario demo, tests, and deployment tooling. Those are the implementation surfaces submitted for judging. Coffer’s pre-existing policy intelligence and production control plane remain private, are product context only, and are not offered as judge-evaluable source.
 
 ## What the MVP proves
 
@@ -28,7 +28,7 @@ sequenceDiagram
     end
 ```
 
-The three server-defined scenarios demonstrate:
+The three server-defined scenarios are evaluated from their public intent fields by a narrow reference policy: unknown agents/vendors or requests over the sample remaining budget block, amounts over the sample auto-approval threshold require approval, and compliant requests allow. They demonstrate:
 
 - **Allow:** an allowlisted agent buys a synthetic market signal for `$0.01` Arc Testnet USDC.
 - **Approval:** a `$12.00` request crosses the human-approval threshold; no wallet call occurs.
@@ -77,6 +77,14 @@ pnpm contract:test
 
 The tests cover strict decision-before-wallet order, block/approval non-execution, server-controlled fixed payloads, deterministic Circle operation IDs, commitment construction, Registry storage/replay behavior, Memo/USDC receipt verification, indexed log identity, public-response redaction, and Web live-write authorization.
 
+Reverify the committed historical Arc proof without credentials:
+
+```bash
+pnpm evidence:verify
+```
+
+The verifier uses two fixed, credential-free Arc Testnet RPCs in order and falls back only when the primary cannot reproduce the complete proof. An explicit `ARC_RPC_URL` or `--rpc-url` selects one operator-provided endpoint and disables automatic fallback.
+
 ## Live deployment
 
 The hosted UI is an intentionally safe, fixed-scenario demo: it does not expose a general-purpose wallet or accept arbitrary transaction parameters. The live Arc claim is independently verifiable from the committed evidence artifact and the ArcScan records below.
@@ -94,24 +102,25 @@ The hosted UI is an intentionally safe, fixed-scenario demo: it does not expose 
 
 Live writes remain Arc Testnet-only and intentionally gated behind a dedicated synthetic Coffer workspace, fixed server-side parameters, exact production host/origin, a judge access code, and explicit write confirmation. See `.env.example` and `docs/DEPLOYMENT.md`.
 
-## Public proof, private intelligence
+## Public, judge-evaluable scope
 
 Included here:
 
 - Arc/Circle integration and transaction encodings
+- transparent hackathon reference decision policy and tests
 - non-custodial decision registry
 - strict evidence verifier
 - fixed synthetic scenarios and polished demo UI
 - deployment scripts, tests, and public evidence
 
-Not included:
+Not included and not requested for judging credit:
 
 - Coffer policy/risk evaluation logic
 - concurrent budget engine
 - approval/RBAC implementation
 - production database, migrations, ledger, audit retention, billing, customer data, or operations
 
-The hosted boundary is deliberate: judges can reproduce and audit the Arc execution path without receiving a clone of Coffer’s private product.
+Judges can reproduce and audit the Arc execution path and fixed synthetic walkthrough from this repository. The private product may provide optional context, but it is not evidence for the submitted implementation and is not required for the local mock-mode review path.
 
 ## Repository terms
 
