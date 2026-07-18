@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   arcTestnetLiveProof,
   arcTestnetLiveProofItems,
+  cofferDashboardReview,
   publicDemoScenarios,
   type DemoScenarioId
 } from "../lib/scenarios";
@@ -105,7 +106,10 @@ export default function ArcDemoPage() {
           <span className={`pulse ${live ? "live" : "mock"}`} />
           {live ? "ACCESS-CONTROLLED LIVE RUN" : "LIVE PROOF · SAFE SIMULATION"}
         </div>
-        <a className="nav-link" href="#live-proof">Arc proof</a>
+        <div className="nav-actions">
+          <a className="nav-link" href="#live-proof">Arc proof</a>
+          <a className="nav-dashboard-link" href="#control-room">Coffer dashboard</a>
+        </div>
       </nav>
 
       <section className="hero shell" id="top">
@@ -260,9 +264,59 @@ export default function ArcDemoPage() {
         </div>
       </section>
 
+      <section className="control-room-section shell" id="control-room">
+        <div className="section-head">
+          <div>
+            <span className="section-index">03 / COFFER CONTROL ROOM</span>
+            <h2>Follow the decision into Coffer.</h2>
+          </div>
+          <p>Arc proves the public settlement. The original Coffer Dashboard shows the policy, human approval, Spend Decision Record, and finance workflow around it.</p>
+        </div>
+
+        <div className="dashboard-boundary" role="note">
+          <span>SAMPLE PRODUCT CONTEXT · SEPARATE FROM ARC PROOF</span>
+          <p>The linked logged-out workspace contains sample records—not customers, traction, revenue, or the Arc transactions in Section 01. Inspect existing records and navigation only; do not submit forms.</p>
+        </div>
+
+        <div className="control-room-grid">
+          <article className="control-chain">
+            <div className="control-chain-head">
+              <span>ONE CONTROL CHAIN</span>
+              <strong>Decision before payment. Evidence after settlement.</strong>
+            </div>
+            <ol>
+              <li><b>01</b><div><strong>Core decides</strong><span>Policy, budget, vendor, amount</span></div></li>
+              <li><b>02</b><div><strong>Human checks exceptions</strong><span>Approval Inbox pauses the wallet path</span></div></li>
+              <li><b>03</b><div><strong>Arc settles approved USDC</strong><span>Registry commitment, Memo, Transfer</span></div></li>
+              <li><b>04</b><div><strong>Finance receives evidence</strong><span>SDR, ledger, and audit trail</span></div></li>
+            </ol>
+          </article>
+
+          <div className="dashboard-entry">
+            <div className="dashboard-entry-head">
+              <div>
+                <span>ORIGINAL COFFER CONTROL ROOM</span>
+                <h3>Open the public review workspace.</h3>
+              </div>
+              <a href={cofferDashboardReview.href} rel="noreferrer" target="_blank">Open dashboard ↗</a>
+            </div>
+            <div className="dashboard-surface-grid">
+              {cofferDashboardReview.surfaces.map((surface, index) => (
+                <a className="dashboard-surface-card" href={surface.href} key={surface.href} rel="noreferrer" target="_blank">
+                  <small>{String(index + 1).padStart(2, "0")} · {surface.eyebrow}</small>
+                  <strong>{surface.title}</strong>
+                  <p>{surface.detail}</p>
+                  <b>VIEW SAMPLE CONTEXT ↗</b>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="architecture shell" id="architecture">
         <div className="section-head">
-          <div><span className="section-index">03 / ARCHITECTURE</span><h2>Public proof. Private intelligence.</h2></div>
+          <div><span className="section-index">04 / ARCHITECTURE</span><h2>Public proof. Private intelligence.</h2></div>
           <p>The repo exposes enough to reproduce and audit Arc settlement—not enough to clone Coffer.</p>
         </div>
         <div className="boundary-grid">
@@ -296,7 +350,7 @@ export default function ArcDemoPage() {
 
       <footer className="shell">
         <div className="brand"><span className="brand-mark">C</span><span>Coffer × Arc</span></div>
-        <p>Verified Arc Testnet proof · Fixed-scenario interaction · Non-custodial control layer</p>
+        <p>Verified Arc Testnet proof · Linked Coffer control room · Non-custodial control layer</p>
       </footer>
     </main>
   );

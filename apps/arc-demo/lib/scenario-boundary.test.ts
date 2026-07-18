@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ArcDecisionWriter, CofferArcControlClient } from "@coffer/arc";
-import { arcTestnetLiveProof, arcTestnetLiveProofItems, publicDemoScenarios } from "./scenarios";
+import {
+  arcTestnetLiveProof,
+  arcTestnetLiveProofItems,
+  cofferDashboardReview,
+  publicDemoScenarios
+} from "./scenarios";
 import { ScenarioBoundControlClient, ScenarioBoundWriter } from "./scenario-boundary";
 
 const sender = "0x1111111111111111111111111111111111111111" as const;
@@ -76,6 +81,27 @@ describe("public Arc Testnet proof", () => {
   it("contains no operator, recipient, provider, wallet, or private decision identifiers", () => {
     const serialized = JSON.stringify(arcTestnetLiveProof);
     expect(serialized).not.toMatch(/operator|recipient|sender|walletId|providerId|decisionId|spendRequestId|recordHash|decisionCommitment/);
+  });
+});
+
+describe("public Coffer product-context links", () => {
+  it("links only to the four intended logged-out review surfaces", () => {
+    expect(cofferDashboardReview.surfaces).toHaveLength(4);
+    expect(new Set(cofferDashboardReview.surfaces.map((surface) => surface.href)).size).toBe(4);
+    expect(new URL(cofferDashboardReview.href).searchParams.get("section")).toBe("agent-api");
+
+    const expectedSections = ["agent-api", "approvals", "requests", "ledger"];
+    for (const [index, surface] of cofferDashboardReview.surfaces.entries()) {
+      const url = new URL(surface.href);
+      expect(url.protocol).toBe("https:");
+      expect(url.hostname).toBe("app.cofferapi.com");
+      expect(url.pathname).toBe("/review");
+      expect([...url.searchParams.keys()]).toEqual(["section"]);
+      expect(url.searchParams.get("section")).toBe(expectedSections[index]);
+      expect(url.hash).toBe("");
+      expect(url.username).toBe("");
+      expect(url.password).toBe("");
+    }
   });
 });
 
