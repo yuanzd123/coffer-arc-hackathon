@@ -92,7 +92,10 @@ export function buildDecisionCommitment(input: {
   return keccak256(encoded);
 }
 
-export function deterministicCircleOperationId(commitment: Hex, operation: "anchor" | "settle"): string {
+export function deterministicCircleOperationId(
+  commitment: Hex,
+  operation: "anchor" | "settle" | "agent-wallet-settle"
+): string {
   const digest = keccak256(
     encodeAbiParameters(
       [{ type: "bytes32" }, { type: "bytes32" }],

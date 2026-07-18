@@ -2,7 +2,7 @@
 
 **Transaction control for AI-agent money.** Coffer decides whether an agent may spend before Circle signs anything, then binds the approved decision to a USDC settlement on Arc.
 
-This repository is the narrow, reproducible Arc integration submitted to the Arc Programmable Money Hackathon’s **Agentic Economy** track. It contains a transparent hackathon reference policy, the onchain commitment registry, Circle Developer-Controlled EOA adapter, Memo-bound USDC settlement, independent receipt verification, fixed-scenario demo, tests, and deployment tooling. Those are the implementation surfaces submitted for judging. Coffer’s pre-existing policy intelligence and production control plane remain private, are product context only, and are not offered as judge-evaluable source.
+This repository is the narrow, reproducible Arc integration submitted to the Arc Programmable Money Hackathon’s **Agentic Economy** track. It contains a transparent hackathon reference policy, the onchain commitment registry, Circle Developer-Controlled EOA adapter, a separate Circle Agent Wallet SCA compatibility adapter, Memo-bound and direct-USDC settlement verification, fixed-scenario demo, tests, public evidence, and deployment tooling. Those are the implementation surfaces submitted for judging. Coffer’s pre-existing policy intelligence and production control plane remain private, are product context only, and are not offered as judge-evaluable source.
 
 ## What the MVP proves
 
@@ -34,12 +34,15 @@ The three server-defined scenarios are evaluated from their public intent fields
 - **Approval:** a `$12.00` request crosses the human-approval threshold; no wallet call occurs.
 - **Block:** an unknown vendor is rejected before wallet execution.
 
+The public Agent Wallet subpath applies the same decision-before-wallet contract to a Circle Agent Wallet on Arc Testnet. Its guard invokes no writer for block or approval, caps the allow path at `0.01 USDC`, rechecks the authenticated Agent-only CLI identity and an estimate-only request before its one mutating call, and independently verifies the resulting deployed sender bytecode plus exact USDC debit. This SCA lane is deliberately separate from Registry + Memo: it claims neither Memo nor Registry binding.
+
 ## Why Arc and Circle are essential
 
 - Arc Testnet is USDC-native and provides the settlement layer.
 - Arc’s Memo contract binds the USDC call data to the opaque Coffer decision commitment and public record-ID hash.
 - The registry creates an immutable, non-custodial proof that the decision existed before settlement.
 - A dedicated Circle Developer-Controlled payer **EOA** submits both transactions with stable UUIDv4 idempotency keys; a separate dedicated EOA is the receive-only synthetic vendor. An EOA is required for the payer because Arc Memo does not accept a smart-contract wallet as the direct caller.
+- The separate Circle Agent Wallet path demonstrates guarded direct USDC from an SCA-compatible address. The committed verifier proves contract bytecode at that address and the exact debit; Circle/Agent-Wallet identity remains explicitly runner-attested rather than inferred from bytecode.
 - The verifier checks chain ID, contract addresses, operator, registry state/event, transaction sender/target, Memo fields, call-data hash, and the exact USDC `Transfer` event.
 
 Arc Testnet configuration used by this repository:
@@ -81,9 +84,10 @@ Reverify the committed historical Arc proof without credentials:
 
 ```bash
 pnpm evidence:verify
+pnpm agent-wallet:evidence:verify
 ```
 
-The verifier uses two fixed, credential-free Arc Testnet RPCs in order and falls back only when the primary cannot reproduce the complete proof. An explicit `ARC_RPC_URL` or `--rpc-url` selects one operator-provided endpoint and disables automatic fallback.
+Both verifiers use two fixed, credential-free Arc Testnet RPCs in order and fall back only when the primary cannot reproduce the complete proof. An explicit `ARC_RPC_URL` or `--rpc-url` may select either fixed endpoint and disables automatic fallback.
 
 ## Live deployment
 
@@ -99,6 +103,9 @@ The hosted UI is an intentionally safe, fixed-scenario demo: it does not expose 
 | Memo-bound USDC settlement | [`0x50d8…a5bb`](https://testnet.arcscan.app/tx/0x50d8df5b32b339172b976ceffb43a772a695fa47f7c6cfe24260719a6a1a5abb) | The fixed `$0.01` synthetic-vendor settlement on Arc Testnet |
 | Settlement block | [`52053015`](https://testnet.arcscan.app/block/52053015) | Public block containing the verified settlement |
 | Machine-readable evidence | [`deployments/arc-testnet-evidence.json`](deployments/arc-testnet-evidence.json) | Receipt-bound evidence consumed by the repository verifier |
+| Circle Agent Wallet address | [`0x2239…E4ce`](https://testnet.arcscan.app/address/0x22395FB45Bd70210Ec6515fAa0Af7be9F6EBE4ce) | Contract code deployed during the first outbound SCA-compatible operation |
+| Agent Wallet direct-USDC settlement | [`0x289b…225a`](https://testnet.arcscan.app/tx/0x289b0b12ddfa34a982018ac5c98b2a3ed9b2165a3ada8010d5180dfdcbe8225a) | One exact `0.01 USDC` debit from the claimed contract address to the fixed recipient |
+| Agent Wallet evidence | [`deployments/arc-testnet-agent-wallet-evidence.json`](deployments/arc-testnet-agent-wallet-evidence.json) | Strict schema, transaction inclusion, code hashes, exact Transfer log, replay boundary, and explicit limitations |
 
 Live writes remain Arc Testnet-only and intentionally gated behind a dedicated synthetic Coffer workspace, fixed server-side parameters, exact production host/origin, a judge access code, and explicit write confirmation. See `.env.example` and `docs/DEPLOYMENT.md`.
 
@@ -107,6 +114,7 @@ Live writes remain Arc Testnet-only and intentionally gated behind a dedicated s
 Included here:
 
 - Arc/Circle integration and transaction encodings
+- Circle Agent Wallet CLI adapter, decision-before-wallet guard, tests, SCA-compatible direct-USDC verifier, and sanitized live evidence
 - transparent hackathon reference decision policy and tests
 - non-custodial decision registry
 - strict evidence verifier

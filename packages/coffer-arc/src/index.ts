@@ -30,6 +30,7 @@ export { createArcPublicClient, ViemArcEvidenceVerifier } from "./verifier";
 export { CofferGuardedArcTransfer } from "./guarded-transfer";
 export type {
   AnchorDecisionInput,
+  ArcAgentWalletSettlementEvidence,
   ArcAnchorEvidence,
   ArcDecisionWriter,
   ArcEvidenceVerifier,

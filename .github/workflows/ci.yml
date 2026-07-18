@@ -28,6 +28,7 @@ jobs:
       - run: pnpm build
       - run: pnpm contract:compile
       - run: pnpm evidence:verify
+      - run: pnpm agent-wallet:evidence:verify
 
   solidity:
     runs-on: ubuntu-24.04

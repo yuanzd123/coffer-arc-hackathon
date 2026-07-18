@@ -19,6 +19,8 @@ import {
 import { decisionOutcomeCode } from "./commitment";
 import { encodeUsdcTransfer } from "./encoding";
 import type {
+  ArcAgentWalletEvidenceVerifier,
+  ArcAgentWalletSettlementEvidence,
   ArcAnchorEvidence,
   ArcEvidenceVerifier,
   ArcSettlementEvidence,
@@ -32,9 +34,39 @@ export function createArcPublicClient(rpcUrl = ARC_TESTNET_RPC_URL) {
   });
 }
 
-type ArcPublicClient = ReturnType<typeof createArcPublicClient>;
+export type ArcPublicClient = ReturnType<typeof createArcPublicClient>;
 
-export class ViemArcEvidenceVerifier implements ArcEvidenceVerifier {
+export type ArcAgentWalletReadiness = {
+  status: "ready_deployed" | "counterfactual_requires_human_checkpoint";
+  network: "ARC-TESTNET";
+  chainId: number;
+  observedBlockNumber: bigint;
+  agentWalletAddress: Address;
+  tokenAddress: Address;
+  tokenDecimals: 6;
+  tokenCodeHash: Hex;
+  usdcBalanceMinor: bigint;
+  requiredAmountMinor: bigint;
+  nativeBalanceWei: bigint;
+  senderCodePresent: boolean;
+  senderCodeHash: Hex | null;
+};
+
+const usdcMetadataAbi = [{
+  type: "function",
+  name: "decimals",
+  stateMutability: "view",
+  inputs: [],
+  outputs: [{ name: "", type: "uint8" }]
+}, {
+  type: "function",
+  name: "balanceOf",
+  stateMutability: "view",
+  inputs: [{ name: "account", type: "address" }],
+  outputs: [{ name: "", type: "uint256" }]
+}] as const;
+
+export class ViemArcEvidenceVerifier implements ArcEvidenceVerifier, ArcAgentWalletEvidenceVerifier {
   constructor(private readonly publicClient: ArcPublicClient = createArcPublicClient()) {}
 
   async verifyNetwork(registryAddress?: Address): Promise<void> {
@@ -47,6 +79,79 @@ export class ViemArcEvidenceVerifier implements ArcEvidenceVerifier {
       const code = await this.publicClient.getCode({ address });
       if (!code || code === "0x") throw new Error(`Required Arc contract is not deployed at ${address}`);
     }
+  }
+
+  async verifyAgentWalletPreflight(): Promise<void> {
+    await this.readAgentWalletNetworkState();
+  }
+
+  async inspectAgentWalletReadiness(input: {
+    sender: Address;
+    requiredAmountMinor: bigint;
+  }): Promise<ArcAgentWalletReadiness> {
+    const sender = getAddress(input.sender);
+    if (input.requiredAmountMinor <= 0n) {
+      throw new Error("Agent Wallet readiness amount must be greater than zero");
+    }
+    const network = await this.readAgentWalletNetworkState();
+    const [rawBalance, senderCode, nativeBalanceWei] = await Promise.all([
+      this.publicClient.readContract({
+        address: ARC_TESTNET_USDC_ADDRESS,
+        abi: usdcMetadataAbi,
+        functionName: "balanceOf",
+        args: [sender],
+        blockNumber: network.blockNumber
+      }),
+      this.publicClient.getCode({ address: sender, blockNumber: network.blockNumber }),
+      this.publicClient.getBalance({ address: sender, blockNumber: network.blockNumber })
+    ]);
+    const usdcBalanceMinor = BigInt(rawBalance);
+    if (usdcBalanceMinor < input.requiredAmountMinor) {
+      throw new Error("Agent Wallet Arc USDC balance is below the fixed proof amount");
+    }
+    const senderCodePresent = Boolean(senderCode && senderCode !== "0x");
+    return {
+      status: senderCodePresent ? "ready_deployed" : "counterfactual_requires_human_checkpoint",
+      network: "ARC-TESTNET",
+      chainId: network.chainId,
+      observedBlockNumber: network.blockNumber,
+      agentWalletAddress: sender,
+      tokenAddress: getAddress(ARC_TESTNET_USDC_ADDRESS),
+      tokenDecimals: 6,
+      tokenCodeHash: keccak256(network.tokenCode),
+      usdcBalanceMinor,
+      requiredAmountMinor: input.requiredAmountMinor,
+      nativeBalanceWei,
+      senderCodePresent,
+      senderCodeHash: senderCodePresent ? keccak256(senderCode as Hex) : null
+    };
+  }
+
+  private async readAgentWalletNetworkState(): Promise<{
+    chainId: number;
+    blockNumber: bigint;
+    tokenCode: Hex;
+  }> {
+    const chainId = await this.publicClient.getChainId();
+    if (chainId !== ARC_TESTNET_CHAIN_ID) {
+      throw new Error(`Expected Arc Testnet chain ${ARC_TESTNET_CHAIN_ID}, received ${chainId}`);
+    }
+    const blockNumber = await this.publicClient.getBlockNumber();
+    const tokenCode = await this.publicClient.getCode({
+      address: ARC_TESTNET_USDC_ADDRESS,
+      blockNumber
+    });
+    if (!tokenCode || tokenCode === "0x") {
+      throw new Error("Arc USDC contract is not deployed at the expected address");
+    }
+    const decimals = await this.publicClient.readContract({
+      address: ARC_TESTNET_USDC_ADDRESS,
+      abi: usdcMetadataAbi,
+      functionName: "decimals",
+      blockNumber
+    });
+    if (Number(decimals) !== 6) throw new Error("Arc USDC decimals mismatch");
+    return { chainId, blockNumber, tokenCode };
   }
 
   async verifyRegistryState(input: {
@@ -247,6 +352,118 @@ export class ViemArcEvidenceVerifier implements ArcEvidenceVerifier {
       memoId: input.memoId,
       memoData: input.memoData,
       callDataHash: expectedCallDataHash
+    };
+  }
+
+  async verifyAgentWalletUsdcTransfer(input: {
+    txHash: Hex;
+    sender: Address;
+    recipient: Address;
+    amountMinor: bigint;
+  }): Promise<ArcAgentWalletSettlementEvidence> {
+    const sender = getAddress(input.sender);
+    const recipient = getAddress(input.recipient);
+    if (input.amountMinor <= 0n) throw new Error("Agent Wallet USDC amount must be greater than zero");
+
+    const chainId = await this.publicClient.getChainId();
+    if (chainId !== ARC_TESTNET_CHAIN_ID) {
+      throw new Error(`Expected Arc Testnet chain ${ARC_TESTNET_CHAIN_ID}, received ${chainId}`);
+    }
+    const receipt = await this.publicClient.getTransactionReceipt({ hash: input.txHash });
+    if (receipt.status !== "success") throw new Error(`Agent Wallet transaction reverted: ${input.txHash}`);
+    if (receipt.transactionHash.toLowerCase() !== input.txHash.toLowerCase()) {
+      throw new Error("Agent Wallet receipt transaction hash mismatch");
+    }
+    const transaction = await this.publicClient.getTransaction({ hash: input.txHash });
+    if (transaction.hash.toLowerCase() !== input.txHash.toLowerCase()
+      || transaction.blockHash?.toLowerCase() !== receipt.blockHash.toLowerCase()
+      || transaction.blockNumber !== receipt.blockNumber
+      || transaction.transactionIndex !== receipt.transactionIndex) {
+      throw new Error("Agent Wallet transaction and receipt inclusion data mismatch");
+    }
+
+    const tokenCode = await this.publicClient.getCode({
+      address: ARC_TESTNET_USDC_ADDRESS,
+      blockNumber: receipt.blockNumber
+    });
+    if (!tokenCode || tokenCode === "0x") throw new Error("Arc USDC contract is not deployed at the expected address");
+    const decimals = await this.publicClient.readContract({
+      address: ARC_TESTNET_USDC_ADDRESS,
+      abi: usdcMetadataAbi,
+      functionName: "decimals",
+      blockNumber: receipt.blockNumber
+    });
+    if (Number(decimals) !== 6) throw new Error("Arc USDC decimals mismatch");
+
+    const senderCode = await this.publicClient.getCode({
+      address: sender,
+      blockNumber: receipt.blockNumber
+    });
+    if (!senderCode || senderCode === "0x") {
+      throw new Error("Claimed Agent Wallet address has no deployed contract bytecode");
+    }
+
+    const parsedTransfers = receipt.logs
+      .filter((log) => getAddress(log.address) === getAddress(ARC_TESTNET_USDC_ADDRESS))
+      .flatMap((log) => {
+        try {
+          const decoded = decodeEventLog({ abi: usdcTransferAbi, data: log.data, topics: log.topics });
+          return decoded.eventName === "Transfer" ? [{ decoded, log }] : [];
+        } catch {
+          return [];
+        }
+      });
+    const senderDebits = parsedTransfers.filter(({ decoded }) => {
+      const args = decoded.args as { from: Address; to: Address; value: bigint };
+      return getAddress(args.from) === sender;
+    });
+    if (senderDebits.length !== 1) {
+      throw new Error(`Expected exactly one Agent Wallet Arc USDC debit, found ${senderDebits.length}`);
+    }
+    const matching = senderDebits.filter(({ decoded }) => {
+        const args = decoded.args as { from: Address; to: Address; value: bigint };
+        return getAddress(args.to) === recipient
+          && args.value === input.amountMinor;
+      });
+    if (matching.length !== 1) {
+      throw new Error(`Expected one matching Agent Wallet Arc USDC Transfer event, found ${matching.length}`);
+    }
+
+    const transferEvent = parseAbiItem(
+      "event Transfer(address indexed from,address indexed to,uint256 value)"
+    );
+    const indexedMatches = await this.publicClient.getLogs({
+      address: ARC_TESTNET_USDC_ADDRESS,
+      event: transferEvent,
+      args: { from: sender, to: recipient },
+      fromBlock: receipt.blockNumber,
+      toBlock: receipt.blockNumber
+    });
+    const receiptLog = matching[0]?.log;
+    if (receiptLog?.logIndex === undefined) throw new Error("Agent Wallet Arc USDC Transfer log index is missing");
+    const exactIndexedMatches = indexedMatches.filter((log) =>
+      log.transactionHash?.toLowerCase() === input.txHash.toLowerCase()
+      && (receiptLog?.logIndex === undefined || log.logIndex === receiptLog.logIndex)
+      && (log.args?.value === undefined || log.args.value === input.amountMinor)
+    );
+    if (exactIndexedMatches.length !== 1) {
+      throw new Error(`Expected one indexed Agent Wallet Arc USDC Transfer event, found ${exactIndexedMatches.length}`);
+    }
+
+    return {
+      txHash: input.txHash,
+      blockNumber: receipt.blockNumber,
+      blockHash: receipt.blockHash,
+      transactionIndex: receipt.transactionIndex,
+      transferLogIndex: receiptLog.logIndex,
+      transactionSender: getAddress(receipt.from),
+      ...(receipt.to ? { transactionTarget: getAddress(receipt.to) } : {}),
+      sender,
+      senderCodeHash: keccak256(senderCode),
+      recipient,
+      amountMinor: input.amountMinor,
+      tokenAddress: getAddress(ARC_TESTNET_USDC_ADDRESS),
+      tokenCodeHash: keccak256(tokenCode)
     };
   }
 }

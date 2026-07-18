@@ -69,6 +69,51 @@ describe("HostedCofferArcClient", () => {
     expect(parsed.settlementTxHash).toBe(txHash);
   });
 
+  it("labels the Agent Wallet SCA lane without claiming Registry or Memo binding", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as { metadata: Record<string, unknown> };
+      expect(body.metadata).toMatchObject({
+        walletType: "Circle Agent Wallet SCA",
+        executionProvider: "circle_agent_wallet_cli",
+        memoBound: false,
+        registryAnchored: false,
+        compatibilityLane: true,
+        sender,
+        recipient
+      });
+      expect(body.metadata).not.toHaveProperty("memoContract");
+      expect(body.metadata).not.toHaveProperty("decisionRegistry");
+      return Response.json({
+        outcome: "allow",
+        spendRequestId: "si_agent_wallet_001",
+        decisionId: "pd_agent_wallet_001",
+        spendDecisionRecordId: "sdr_agent_wallet_001",
+        reasonCode: "within_budget",
+        reason: "Within policy"
+      });
+    });
+    const client = new HostedCofferArcClient({
+      apiKey: "coffer_test_key_value_long_enough",
+      baseUrl: "https://app.example.test/api",
+      senderAddress: sender,
+      walletMode: "agent_wallet_sca",
+      fetch: fetchMock as typeof fetch
+    });
+
+    await expect(client.requestDecision(sampleIntent())).resolves.toMatchObject({ outcome: "allow" });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("rejects a Registry claim in the Agent Wallet SCA lane", () => {
+    expect(() => new HostedCofferArcClient({
+      apiKey: "coffer_test_key_value_long_enough",
+      baseUrl: "https://app.example.test/api",
+      senderAddress: sender,
+      registryAddress: registry,
+      walletMode: "agent_wallet_sca"
+    })).toThrow("must not claim a Registry binding");
+  });
+
   it("retries a transient HTTP failure with the identical idempotent request", async () => {
     const attempts: Array<{ body: string; idempotencyKey: string | null }> = [];
     const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
@@ -126,6 +171,34 @@ describe("HostedCofferArcClient", () => {
       message: "Hosted Coffer request failed (409): settlement conflict"
     });
     expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("redacts private Coffer identifiers and credentials from hosted error bodies", async () => {
+    const privateValues = [
+      "si_private_123",
+      "pd_private_456",
+      "sdr_private_789",
+      "sr_private_abc",
+      "dec_private_def",
+      "operator@example.test",
+      "secret-bearer-value"
+    ];
+    const fetchMock = vi.fn(async () => new Response(
+      `${privateValues.slice(0, 5).join(" ")} ${privateValues[5]} Bearer ${privateValues[6]}`,
+      { status: 400, statusText: "Bad Request" }
+    ));
+    const client = createHostedClient(fetchMock, { maxAttempts: 1 });
+
+    let message = "";
+    try {
+      await client.requestDecision(sampleIntent());
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+    for (const privateValue of privateValues) expect(message).not.toContain(privateValue);
+    expect(message).toContain("[Coffer record id redacted]");
+    expect(message).toContain("[email redacted]");
+    expect(message).toContain("Bearer [redacted]");
   });
 
   it("aborts a hung request at the configured timeout", async () => {
