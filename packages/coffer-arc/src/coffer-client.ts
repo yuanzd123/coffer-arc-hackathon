@@ -16,8 +16,9 @@ import type {
 export type HostedCofferArcClientOptions = {
   apiKey: string;
   baseUrl: string;
-  registryAddress: Address;
+  registryAddress?: Address;
   senderAddress: Address;
+  walletMode?: "developer_controlled_eoa" | "agent_wallet_sca";
   fetch?: typeof fetch;
   requestTimeoutMs?: number;
   maxAttempts?: number;
@@ -27,8 +28,9 @@ export type HostedCofferArcClientOptions = {
 export class HostedCofferArcClient implements CofferArcControlClient {
   private readonly apiKey: string;
   private readonly baseUrl: string;
-  private readonly registryAddress: Address;
+  private readonly registryAddress?: Address;
   private readonly senderAddress: Address;
+  private readonly walletMode: "developer_controlled_eoa" | "agent_wallet_sca";
   private readonly fetchImpl: typeof fetch;
   private readonly requestTimeoutMs: number;
   private readonly maxAttempts: number;
@@ -37,8 +39,21 @@ export class HostedCofferArcClient implements CofferArcControlClient {
   constructor(options: HostedCofferArcClientOptions) {
     this.apiKey = requireText(options.apiKey, "Coffer API key", 512);
     this.baseUrl = normalizeBaseUrl(options.baseUrl);
-    this.registryAddress = getAddress(options.registryAddress);
     this.senderAddress = getAddress(options.senderAddress);
+    const walletMode = options.walletMode ?? "developer_controlled_eoa";
+    if (walletMode !== "developer_controlled_eoa" && walletMode !== "agent_wallet_sca") {
+      throw new Error("Unsupported Circle wallet mode");
+    }
+    this.walletMode = walletMode;
+    if (this.walletMode === "developer_controlled_eoa") {
+      if (!options.registryAddress) throw new Error("Decision registry address is required for the developer-controlled EOA lane");
+      this.registryAddress = getAddress(options.registryAddress);
+    } else {
+      if (options.registryAddress !== undefined) {
+        throw new Error("Agent Wallet SCA compatibility lane must not claim a Registry binding");
+      }
+      this.registryAddress = undefined;
+    }
     this.fetchImpl = options.fetch ?? globalThis.fetch;
     this.requestTimeoutMs = boundedInteger(options.requestTimeoutMs ?? 10_000, "request timeout", 1, 60_000);
     this.maxAttempts = boundedInteger(options.maxAttempts ?? 3, "maximum attempts", 1, 5);
@@ -46,7 +61,7 @@ export class HostedCofferArcClient implements CofferArcControlClient {
   }
 
   async requestDecision(intent: CofferArcSpendIntent): Promise<CofferArcDecision> {
-    const metadata = {
+    const sharedMetadata = {
       ...(intent.metadata ?? {}),
       adapterVersion: COFFER_ARC_ADAPTER_VERSION,
       chain: "Arc Testnet",
@@ -54,12 +69,27 @@ export class HostedCofferArcClient implements CofferArcControlClient {
       chainId: ARC_TESTNET_CHAIN_ID,
       asset: "USDC",
       assetAddress: ARC_TESTNET_USDC_ADDRESS,
-      walletType: "Circle Developer-Controlled EOA",
       sender: this.senderAddress,
-      recipient: getAddress(intent.recipient),
-      memoContract: ARC_TESTNET_MEMO_ADDRESS,
-      decisionRegistry: this.registryAddress
+      recipient: getAddress(intent.recipient)
     };
+    const metadata = this.walletMode === "developer_controlled_eoa"
+      ? {
+          ...sharedMetadata,
+          walletType: "Circle Developer-Controlled EOA",
+          executionProvider: "circle_developer_controlled_wallets",
+          memoBound: true,
+          registryAnchored: true,
+          memoContract: ARC_TESTNET_MEMO_ADDRESS,
+          decisionRegistry: this.registryAddress
+        }
+      : {
+          ...sharedMetadata,
+          walletType: "Circle Agent Wallet SCA",
+          executionProvider: "circle_agent_wallet_cli",
+          memoBound: false,
+          registryAnchored: false,
+          compatibilityLane: true
+        };
     const response = await this.request<Record<string, unknown>>("/v1/spend-intents", {
       method: "POST",
       headers: { "idempotency-key": requireText(intent.idempotencyKey, "idempotency key", 240) },
@@ -286,7 +316,12 @@ function isTimeoutError(error: unknown): boolean {
 }
 
 function sanitizeErrorBody(value: string): string {
-  return value.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
+  return value
+    .replace(/\bBearer\s+[^\s,;]+/gi, "Bearer [redacted]")
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, "[email redacted]")
+    .replace(/\b(?:si|pd|sdr|sr|dec)[_-][A-Za-z0-9_-]{3,240}\b/gi, "[Coffer record id redacted]")
+    .replace(/[\u0000-\u001f\u007f]+/g, " ")
+    .trim();
 }
 
 function requireTxHash(value: Hex): Hex {

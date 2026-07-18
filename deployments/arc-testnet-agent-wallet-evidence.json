@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "evidenceType": "coffer_arc_agent_wallet_sca_compatibility",
+  "generatedAt": "2026-07-18T03:32:14.536Z",
+  "network": "ARC-TESTNET",
+  "chainId": 5042002,
+  "proofBoundary": {
+    "lane": "direct_usdc_sca_compatibility",
+    "amountUsd": "0.01",
+    "amountMinor": "10000",
+    "tokenAddress": "0x3600000000000000000000000000000000000000",
+    "agentWalletAddress": "0x22395FB45Bd70210Ec6515fAa0Af7be9F6EBE4ce",
+    "fixedRecipient": "0xf8437D8DA06a45f2EFa5777569B27Fe5cA0BcDF8",
+    "memoBound": false,
+    "registryAnchored": false,
+    "decisionCorrelation": "offchain_commitment_only",
+    "circleProvenance": "runner_attested_pinned_circle_cli",
+    "onchainVerification": "independent_public_arc_rpc"
+  },
+  "toolchain": {
+    "circleCliPackage": "@circle-fin/cli",
+    "circleCliVersion": "0.0.6",
+    "circleCliNpmIntegrity": "sha512-9QBShJ99xm/2j0xvdqdKhDaQRjZ3ZyQucJrgEW+8YZEHspU02ZYo1f8LP6AkElglHoSlNGQoiAYvRyHWkXH/OQ==",
+    "executionProvider": "circle_agent_wallet_cli"
+  },
+  "scenarioOrder": [
+    "block",
+    "approval",
+    "allow",
+    "allow_replay"
+  ],
+  "scenarios": {
+    "block": {
+      "expectedOutcome": "block",
+      "observedOutcome": "block",
+      "executionState": "not_executed",
+      "walletTransferCalls": 0,
+      "settlementReportCalls": 0,
+      "settlementReference": null
+    },
+    "approval": {
+      "expectedOutcome": "requires_approval",
+      "observedOutcome": "requires_approval",
+      "executionState": "not_executed",
+      "walletTransferCalls": 0,
+      "settlementReportCalls": 0,
+      "settlementReference": null
+    },
+    "allow": {
+      "expectedOutcome": "allow",
+      "observedOutcome": "allow",
+      "executionState": "settled",
+      "replayed": false,
+      "walletTransferCalls": 1,
+      "settlementReportCalls": 1,
+      "circleWriteProvenance": "runner_attested_pinned_circle_cli",
+      "circleProviderReferenceSha256": "0x0ec951f4bbeb3f142186449e1427258f6aa436be240f1e7a7f73383bb2fc1fc0",
+      "decisionCommitment": "0xee47dd3a5857f452b772ac24b8363ec41c4224c9fbe61208dfd7e882f7a896db",
+      "recordHash": "0x0ea498530b6afbbc7bca4d613cea84f2b464c5feb146936afa369d7820959103",
+      "commitmentBinding": "offchain_correlation_only_no_arc_memo_or_registry",
+      "settlement": {
+        "transactionHash": "0x289b0b12ddfa34a982018ac5c98b2a3ed9b2165a3ada8010d5180dfdcbe8225a",
+        "blockNumber": "52375608",
+        "blockHash": "0x1cb6cb48071984eaffc801813bed997d9f9067eb4549320965ffbc8afe9bb7d4",
+        "transactionIndex": 5,
+        "transferLogIndex": 18,
+        "transactionSender": "0x0A3493F52C2F42ace9A6bd754E954f798D7a8d4a",
+        "transactionTarget": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+        "agentWalletAddress": "0x22395FB45Bd70210Ec6515fAa0Af7be9F6EBE4ce",
+        "claimedSenderContractCodeHash": "0x22bcbefe2dacbb6289d731af9eabb98fdfb6480f4c59c9b2f45f574f008ef68f",
+        "recipient": "0xf8437D8DA06a45f2EFa5777569B27Fe5cA0BcDF8",
+        "amountMinor": "10000",
+        "tokenAddress": "0x3600000000000000000000000000000000000000",
+        "tokenCodeHash": "0xc9987bd3af6b26a030951faa7eacc017b68343aeedf3ce5fe68f821c4b93939d",
+        "arcScanUrl": "https://testnet.arcscan.app/tx/0x289b0b12ddfa34a982018ac5c98b2a3ed9b2165a3ada8010d5180dfdcbe8225a"
+      }
+    },
+    "allow_replay": {
+      "expectedOutcome": "allow",
+      "observedOutcome": "allow",
+      "executionState": "settled",
+      "replayed": true,
+      "walletTransferCalls": 0,
+      "settlementReportCalls": 0,
+      "circleWriteProvenance": "preexisting_hosted_settlement_reference",
+      "circleProviderReferenceSha256": "0x0ec951f4bbeb3f142186449e1427258f6aa436be240f1e7a7f73383bb2fc1fc0",
+      "decisionCommitment": "0xee47dd3a5857f452b772ac24b8363ec41c4224c9fbe61208dfd7e882f7a896db",
+      "recordHash": "0x0ea498530b6afbbc7bca4d613cea84f2b464c5feb146936afa369d7820959103",
+      "commitmentBinding": "offchain_correlation_only_no_arc_memo_or_registry",
+      "settlement": {
+        "transactionHash": "0x289b0b12ddfa34a982018ac5c98b2a3ed9b2165a3ada8010d5180dfdcbe8225a",
+        "blockNumber": "52375608",
+        "blockHash": "0x1cb6cb48071984eaffc801813bed997d9f9067eb4549320965ffbc8afe9bb7d4",
+        "transactionIndex": 5,
+        "transferLogIndex": 18,
+        "transactionSender": "0x0A3493F52C2F42ace9A6bd754E954f798D7a8d4a",
+        "transactionTarget": "0x5FF137D4b0FDCD49DcA30c7CF57E578a026d2789",
+        "agentWalletAddress": "0x22395FB45Bd70210Ec6515fAa0Af7be9F6EBE4ce",
+        "claimedSenderContractCodeHash": "0x22bcbefe2dacbb6289d731af9eabb98fdfb6480f4c59c9b2f45f574f008ef68f",
+        "recipient": "0xf8437D8DA06a45f2EFa5777569B27Fe5cA0BcDF8",
+        "amountMinor": "10000",
+        "tokenAddress": "0x3600000000000000000000000000000000000000",
+        "tokenCodeHash": "0xc9987bd3af6b26a030951faa7eacc017b68343aeedf3ce5fe68f821c4b93939d",
+        "arcScanUrl": "https://testnet.arcscan.app/tx/0x289b0b12ddfa34a982018ac5c98b2a3ed9b2165a3ada8010d5180dfdcbe8225a"
+      }
+    }
+  },
+  "verificationBoundary": {
+    "independentlyVerifiable": [
+      "Arc Testnet chain ID",
+      "deployed contract bytecode at the claimed Agent Wallet address at the settlement block",
+      "Arc USDC contract code and 6 decimals",
+      "one exact 0.01 USDC debit from the claimed sender contract to the fixed recipient",
+      "transaction, receipt, and indexed log inclusion"
+    ],
+    "runnerAttested": [
+      "Coffer decision outcomes",
+      "Circle CLI provenance and mutating transfer invocation counts",
+      "SHA-256 correlation of the private Circle provider reference",
+      "Coffer logical settlement-report call count (transport retries are not counted)",
+      "off-chain decision commitment correlation"
+    ],
+    "explicitlyNotClaimed": [
+      "Arc Memo binding",
+      "CofferDecisionRegistry binding",
+      "independent proof of Circle API or session identity",
+      "independent proof that the sender contract is a Circle Agent Wallet or ERC-4337 account",
+      "independent proof that the sender contract initiated the debit rather than an allowance-based transferFrom",
+      "independent proof of zero mutating Circle transfer invocations"
+    ]
+  }
+}

@@ -66,6 +66,24 @@ export interface ArcDecisionWriter {
   transferUsdcWithMemo(input: MemoUsdcTransferInput): Promise<ArcWriteResult>;
 }
 
+export type DirectUsdcTransferInput = {
+  recipient: Address;
+  amountMinor: bigint;
+  operationId: string;
+};
+
+export type ArcAgentWalletWriteResult = {
+  provider: "circle_agent_wallet_cli";
+  providerTransactionId: string;
+  txHash: Hex;
+};
+
+export interface ArcAgentWalletWriter {
+  readonly sender: Address;
+  readonly maxAmountMinor: bigint;
+  transferUsdc(input: DirectUsdcTransferInput): Promise<ArcAgentWalletWriteResult>;
+}
+
 export type ArcAnchorEvidence = {
   txHash: Hex;
   blockNumber: bigint;
@@ -84,6 +102,22 @@ export type ArcSettlementEvidence = {
   memoId: Hex;
   memoData: Hex;
   callDataHash: Hex;
+};
+
+export type ArcAgentWalletSettlementEvidence = {
+  txHash: Hex;
+  blockNumber: bigint;
+  blockHash: Hex;
+  transactionIndex: number;
+  transferLogIndex: number;
+  transactionSender: Address;
+  transactionTarget?: Address;
+  sender: Address;
+  senderCodeHash: Hex;
+  recipient: Address;
+  amountMinor: bigint;
+  tokenAddress: Address;
+  tokenCodeHash: Hex;
 };
 
 export interface ArcEvidenceVerifier {
@@ -111,6 +145,15 @@ export interface ArcEvidenceVerifier {
   }): Promise<ArcSettlementEvidence>;
 };
 
+export interface ArcAgentWalletEvidenceVerifier {
+  verifyAgentWalletUsdcTransfer(input: {
+    txHash: Hex;
+    sender: Address;
+    recipient: Address;
+    amountMinor: bigint;
+  }): Promise<ArcAgentWalletSettlementEvidence>;
+}
+
 export type GuardedArcTransferResult =
   | {
       state: "not_executed";
@@ -133,5 +176,37 @@ export type GuardedArcTransferOptions = {
   verifier: ArcEvidenceVerifier;
   registryAddress: Address;
   registryDeploymentBlock?: bigint;
+  now?: () => Date;
+};
+
+export type GuardedAgentWalletTransferResult =
+  | {
+      state: "not_executed";
+      decision: CofferArcDecision;
+      reason: "blocked" | "requires_approval";
+    }
+  | {
+      state: "settled";
+      decision: CofferArcDecision;
+      replayed: boolean;
+      decisionCommitment: Hex;
+      recordHash: Hex;
+      settlement: ArcAgentWalletSettlementEvidence;
+    };
+
+/**
+ * Internal-only result used while reporting Circle audit correlation to the
+ * hosted control plane. Public executors must remove the provider reference.
+ */
+export type InternalGuardedAgentWalletTransferResult =
+  | Extract<GuardedAgentWalletTransferResult, { state: "not_executed" }>
+  | (Extract<GuardedAgentWalletTransferResult, { state: "settled" }> & {
+      providerTransactionId?: string;
+    });
+
+export type GuardedAgentWalletTransferOptions = {
+  controlClient: CofferArcControlClient;
+  writer: ArcAgentWalletWriter;
+  verifier: ArcAgentWalletEvidenceVerifier;
   now?: () => Date;
 };

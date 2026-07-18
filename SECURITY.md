@@ -23,4 +23,5 @@ Email `support@cofferapi.com` with the subject `Coffer Arc security report`. Ple
 - Only the allow scenario can reach the writer, and only for the fixed recipient and exactly `10,000` USDC minor units (`$0.01`).
 - Approval and block outcomes never call Circle.
 - Retries reuse Coffer and Circle idempotency keys and independently reverify Registry, Memo, and Transfer evidence.
+- The Agent Wallet compatibility writer has a separate one-shot boundary: it rechecks an Agent-only identity and estimate request, journals before its one transfer, never automatically retries an ambiguous result, and publishes no raw provider reference.
 - The deployment uses a dedicated low-balance Circle sandbox EOA and should disable writes and rotate credentials after judging.

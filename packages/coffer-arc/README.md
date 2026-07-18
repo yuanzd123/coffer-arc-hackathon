@@ -1,6 +1,6 @@
 # Coffer for Arc
 
-This package is the public, judge-evaluable Arc integration for Coffer. It accepts a bounded spend decision before any wallet operation, anchors an opaque decision commitment, executes an approved USDC transfer through Arc's predeployed Memo contract, verifies the onchain evidence, and reports the verified transaction reference through the public adapter contract.
+This package is the public, judge-evaluable Arc integration for Coffer. It accepts a bounded spend decision before any wallet operation. The EOA lane anchors an opaque decision commitment and executes approved USDC through Arc's Memo contract. The separate `@coffer/arc/agent-wallet` subpath binds the same decision contract to Circle's pinned Agent Wallet CLI, caps one direct-USDC SCA-compatible transfer, and verifies its public Arc evidence.
 
 The production Coffer policy engine is not included and is not requested for judging credit. The submitted repository lets judges inspect and run the separate hackathon reference policy, Arc adapter, fixed synthetic decision boundary, contract, verifier, tests, deployment tooling, and historical public evidence without using the private policy service.
 
@@ -8,6 +8,7 @@ The production Coffer policy engine is not included and is not requested for jud
 
 - `block` and `requires_approval` never call the Arc writer.
 - Live Memo writes require a dedicated Circle Developer-Controlled payer **EOA** and a separate receive-only vendor recipient EOA. Arc supports account abstraction generally, but its Memo contract requires an EOA as the direct caller and explicitly excludes smart contract wallets in that role.
+- The separate Agent Wallet compatibility lane never claims Memo or Registry binding. It requires one uniquely matched authenticated `ARC-TESTNET` Agent Wallet, runs an estimate-only compatibility check before the mutation boundary, never automatically retries an ambiguous transfer, and caps the writer at exactly `10,000` USDC minor units.
 - Circle anchor and settlement operations use separate, deterministic UUIDv4 idempotency keys so process retries do not create a second payment.
 - The verifier checks the Arc chain, registry event, Memo event, USDC Transfer event, sender, recipient, amount, commitment, and record hash before settlement is reported.
 - The registry is immutable, non-upgradeable, operator-only, and non-custodial.
@@ -26,6 +27,14 @@ pnpm --filter @coffer/arc test
 ```
 
 The test suite validates the pre-payment gate, strict operation order, replay behavior, commitment construction, Circle idempotency keys, public hosted contract mapping, and Solidity compilation. The optional `pnpm contract:test` command runs the pinned Foundry image and requires Docker.
+
+The committed Agent Wallet settlement is independently reproducible without Circle or Coffer credentials:
+
+```bash
+pnpm --filter @coffer/arc agent-wallet:evidence:verify
+```
+
+That verifier checks Arc chain identity, deployed code at the claimed sender at settlement, Arc USDC code/decimals, transaction and receipt inclusion, and one exact `0.01 USDC` debit to the fixed recipient. The evidence keeps Coffer decisions and Circle CLI invocation counts runner-attested, and explicitly does not claim independent Circle session identity, ERC-4337 identity, Memo binding, Registry binding, or proof that the contract initiated the debit rather than being debited through an allowance.
 
 ## Live environment
 

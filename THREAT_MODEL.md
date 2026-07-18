@@ -4,6 +4,7 @@
 
 - integrity of the Coffer spend decision and its Arc commitment
 - dedicated Circle sandbox EOA and its testnet balance
+- dedicated Circle Agent Wallet testnet address and its capped proof balance
 - Circle and Coffer API quota
 - server-side credentials
 - accuracy of the public Arc evidence
@@ -11,7 +12,7 @@
 
 ## Trust boundaries
 
-The browser is untrusted. It can select only one of three scenario IDs; run ID, recipient, amount, wallet, registry, and hosted credentials are controlled by the server. The hosted Coffer control plane is trusted to evaluate the synthetic intent and return the canonical decision contract. Circle is trusted to control the EOA. Arc state is independently checked through RPC receipts, logs, and contract reads.
+The browser is untrusted. It can select only one of three scenario IDs; run ID, recipient, amount, wallet, registry, and hosted credentials are controlled by the server. The hosted Coffer control plane is trusted to evaluate the synthetic intent and return the canonical decision contract. Circle is trusted to control the EOA and, separately, to authenticate and execute the Agent Wallet CLI request. Arc state is independently checked through RPC receipts, logs, and contract reads.
 
 ## Main threats and controls
 
@@ -21,7 +22,9 @@ The browser is untrusted. It can select only one of three scenario IDs; run ID, 
 | Misconfigured policy allows approval/block scenario | Expected outcome wrapper fails closed before any writer call. |
 | Same idempotency key reused with changed payload | Hosted Coffer stores a canonical request fingerprint and returns `409`; demo inputs are fixed. |
 | Retry creates a second payment | Stable, separate Circle UUIDv4 keys for anchor and settlement; fixed server run IDs; replay path verifies existing chain evidence. |
+| Ambiguous Agent Wallet transfer is retried | Durable pre-mutation journal, exactly one CLI transfer invocation, terminal workspace after any attempt, and read-only reconciliation only. |
 | Fake or mismatched chain evidence | Verify Arc chain ID, Registry operator/state/event, receipt status/from/to, Memo sender/target/ID/data/call hash, and exact same-transaction USDC Transfer. |
+| SCA address is overclaimed as Circle/ERC-4337 | Public evidence verifies contract bytecode and the exact USDC debit only; Circle session identity, ERC-4337 identity, and call-vs-allowance causality remain explicitly unclaimed. |
 | Third party emits the same Memo ID | Indexed query filters sender, target, and Memo ID and matches transaction hash and log index. |
 | Shared judge code leaks | Fixed runs prevent new unique payments; low-balance EOA; exact host/origin; code has at least 32 bytes; writes disabled after judging. |
 | Secret or private-core disclosure | Exact public file manifest, clean Git history, secret/private-path scans, no private workspace imports, public DTO redaction. |
