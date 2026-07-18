@@ -96,6 +96,7 @@ The hosted UI is an intentionally safe, fixed-scenario demo: it does not expose 
 | Public proof | Verifiable value | What it demonstrates |
 | --- | --- | --- |
 | Hosted demo | [coffer-arc-demo.vercel.app](https://coffer-arc-demo.vercel.app) | The fixed allow / approval / block product flow |
+| Sample Coffer control room | [app.cofferapi.com/review](https://app.cofferapi.com/review?section=agent-api) | Optional logged-out product context for Agent API, approvals, SDR, ledger, and audit |
 | Decision Registry | [`0x3d1787f00516ed4a30363b3fB3805bC78CC28F9D`](https://testnet.arcscan.app/address/0x3d1787f00516ed4a30363b3fB3805bC78CC28F9D) | Deployed Coffer commitment registry on Arc Testnet |
 | Circle payer/operator EOA | [`0x79313e5EBcD4562c19301Fd41d43f7239606c9f4`](https://testnet.arcscan.app/address/0x79313e5EBcD4562c19301Fd41d43f7239606c9f4) | Dedicated transaction signer used for this synthetic demo |
 | Registry deployment | [`0xb566…b33d`](https://testnet.arcscan.app/tx/0xb566327ea6c5685a43acdab6c1e765110352a8dabb0649f21fc9012e7cf6b33d) | Successful Registry contract deployment |
@@ -108,6 +109,8 @@ The hosted UI is an intentionally safe, fixed-scenario demo: it does not expose 
 | Agent Wallet evidence | [`deployments/arc-testnet-agent-wallet-evidence.json`](deployments/arc-testnet-agent-wallet-evidence.json) | Strict schema, transaction inclusion, code hashes, exact Transfer log, replay boundary, and explicit limitations |
 
 Live writes remain Arc Testnet-only and intentionally gated behind a dedicated synthetic Coffer workspace, fixed server-side parameters, exact production host/origin, a judge access code, and explicit write confirmation. See `.env.example` and `docs/DEPLOYMENT.md`.
+
+The demo's `Coffer Control Room` section links to a separate logged-out sample workspace so judges can understand the product workflow around the Arc integration. Its rows are sample product context—not customers, traction, revenue, or the Arc transactions above—and the route is not submitted as public implementation evidence. Inspect existing records and navigation only; do not submit forms.
 
 ## Public, judge-evaluable scope
 

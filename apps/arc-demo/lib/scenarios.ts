@@ -5,6 +5,37 @@ export const demoScenarioIds = ["allow", "approval", "block"] as const;
 export type DemoScenarioId = (typeof demoScenarioIds)[number];
 
 const ARC_TESTNET_ARCSCAN_URL = "https://testnet.arcscan.app";
+const COFFER_REVIEW_URL = "https://app.cofferapi.com/review";
+
+export const cofferDashboardReview = {
+  href: `${COFFER_REVIEW_URL}?section=agent-api`,
+  surfaces: [
+    {
+      eyebrow: "AGENT CONTROL",
+      title: "Agent API + run trace",
+      detail: "See how an external agent asks before cost and how that request becomes a Spend Decision Record.",
+      href: `${COFFER_REVIEW_URL}?section=agent-api`
+    },
+    {
+      eyebrow: "HUMAN CHECKPOINT",
+      title: "Approval Inbox",
+      detail: "See where policy exceptions pause for an explicit human decision before any wallet call.",
+      href: `${COFFER_REVIEW_URL}?section=approvals`
+    },
+    {
+      eyebrow: "DECISION EVIDENCE",
+      title: "Requests + SDR",
+      detail: "Inspect the request, decision reason, and evidence chain that explain why money may or may not move.",
+      href: `${COFFER_REVIEW_URL}?section=requests`
+    },
+    {
+      eyebrow: "FINANCE RECORD",
+      title: "Ledger + audit",
+      detail: "Follow approved results into the finance-facing ledger and audit trail for reconciliation and review.",
+      href: `${COFFER_REVIEW_URL}?section=ledger`
+    }
+  ]
+} as const;
 
 export const arcTestnetLiveProof = {
   network: "Arc Testnet",
